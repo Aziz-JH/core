@@ -100,7 +100,6 @@ class Isotope extends \Controller
         }
     }
 
-
     /**
      * Get the currently active Isotope cart
      *
@@ -118,7 +117,6 @@ class Isotope extends \Controller
         return static::$objCart;
     }
 
-
     /**
      * Set the currently active Isotope cart
      *
@@ -128,7 +126,6 @@ class Isotope extends \Controller
     {
         static::$objCart = $objCart;
     }
-
 
     /**
      * Get the currently active Isotope configuration
@@ -161,7 +158,6 @@ class Isotope extends \Controller
         return static::$objConfig;
     }
 
-
     /**
      * Set the currently active Isotope configuration
      *
@@ -190,7 +186,6 @@ class Isotope extends \Controller
 
         return static::$objRequestCache;
     }
-
 
     /**
      * Calculate price trough hook and foreign prices
@@ -239,8 +234,7 @@ class Isotope extends \Controller
 
         return static::roundPrice($fltPrice);
     }
-
-
+    
     /**
      * Rounds a price according to store config settings
      *
@@ -259,7 +253,6 @@ class Isotope extends \Controller
 
         return round($fltValue, $objConfig->priceRoundPrecision);
     }
-
 
     /**
      * Format given price according to store config settings
@@ -283,7 +276,6 @@ class Isotope extends \Controller
 
         return number_format($fltPrice, $arrFormat[0], $arrFormat[1], $arrFormat[2]);
     }
-
 
     /**
      * Format given price according to store config settings, including currency representation
@@ -318,7 +310,6 @@ class Isotope extends \Controller
         return $strCurrency . $strPrice;
     }
 
-
     /**
      * Format the number of items and return the items string
      *
@@ -341,7 +332,6 @@ class Isotope extends \Controller
         }
     }
 
-
     /**
      * Callback for isoButton Hook
      *
@@ -356,7 +346,6 @@ class Isotope extends \Controller
 
         return $arrButtons;
     }
-
 
     /**
      * Validate a custom regular expression
@@ -397,7 +386,6 @@ class Isotope extends \Controller
 
         return false;
     }
-
 
     /**
      * Format options label and value
