@@ -140,8 +140,8 @@ class Standard extends Document implements IsotopeDocument
         $objCollection->addToTemplate(
             $objCollectionTemplate,
             array(
-                 'gallery' => $this->gallery,
-                 'sorting' => $objCollection->getItemsSortingCallable($this->orderCollectionBy),
+                'gallery' => $this->gallery,
+                'sorting' => $objCollection->getItemsSortingCallable($this->orderCollectionBy),
             )
         );
 
