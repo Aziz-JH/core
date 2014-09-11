@@ -16,6 +16,9 @@ use Isotope\Interfaces\IsotopePrice;
 use Isotope\Isotope;
 use Model\Collection;
 
+/**
+ * @method \Isotope\Model\ProductPrice current()
+ */
 class ProductPrice extends Collection implements IsotopePrice
 {
 
@@ -119,6 +122,7 @@ class ProductPrice extends Collection implements IsotopePrice
             $fltOriginalPrice   = null;
             $arrPrices          = array();
 
+            /** @var \Isotope\Model\ProductPrice $objPrice */
             foreach ($this->arrModels as $objPrice) {
                 $fltNew       = $blnShowTiers ? $objPrice->getLowestAmount() : $objPrice->getAmount();
                 $arrPrices[]  = $fltNew;

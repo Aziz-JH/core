@@ -77,10 +77,6 @@ class Standard extends Document implements IsotopeDocument
         // Include TCPDF config
         require_once TL_ROOT . '/system/config/tcpdf.php';
 
-        if (version_compare(VERSION, '3.3', '<')) {
-            require_once TL_ROOT . '/system/modules/core/vendor/tcpdf/tcpdf.php';
-        }
-
         // Create new PDF document
         $pdf = new \TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true);
 

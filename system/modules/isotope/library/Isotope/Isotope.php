@@ -40,7 +40,7 @@ class Isotope extends \Controller
     /**
      * Isotope version
      */
-    const VERSION = '2.1.7';
+    const VERSION = '2.2.0-dev';
 
     /**
      * True if the system has been initialized
@@ -195,10 +195,11 @@ class Isotope extends \Controller
      * @param string $strField
      * @param int    $intTaxClass
      * @param array  $arrAddresses
+     * @param array  $arrOptions
      *
      * @return float
      */
-    public static function calculatePrice($fltPrice, $objSource, $strField, $intTaxClass = 0, array $arrAddresses = null)
+    public static function calculatePrice($fltPrice, $objSource, $strField, $intTaxClass = 0, array $arrAddresses = null, array $arrOptions = array())
     {
         if (!is_numeric($fltPrice)) {
             return $fltPrice;
@@ -208,7 +209,7 @@ class Isotope extends \Controller
         if (isset($GLOBALS['ISO_HOOKS']['calculatePrice']) && is_array($GLOBALS['ISO_HOOKS']['calculatePrice'])) {
             foreach ($GLOBALS['ISO_HOOKS']['calculatePrice'] as $callback) {
                 $objCallback = \System::importStatic($callback[0]);
-                $fltPrice    = $objCallback->$callback[1]($fltPrice, $objSource, $strField, $intTaxClass);
+                $fltPrice = $objCallback->$callback[1]($fltPrice, $objSource, $strField, $intTaxClass, $arrOptions);
             }
         }
 
