@@ -123,31 +123,7 @@ class Backend extends Contao_Backend
      */
     public static function getTemplates($strPrefix)
     {
-        $arrTemplates = array();
-
-        // Get the default templates
-        foreach (\TemplateLoader::getPrefixedFiles($strPrefix) as $strTemplate) {
-            $arrTemplates[$strTemplate] = $strTemplate;
-        }
-
-        $arrCustomized = glob(TL_ROOT . '/templates/' . $strPrefix . '*');
-
-        // Add the customized templates
-        if (is_array($arrCustomized)) {
-            foreach ($arrCustomized as $strFile) {
-
-                $strTemplate = basename($strFile, strrchr($strFile, '.'));
-
-                if (!isset($arrTemplates[$strTemplate])) {
-                    $arrTemplates[''][$strTemplate] = $strTemplate;
-                }
-            }
-        }
-
-        // Do not look for back end templates in theme folders (see #5379)
-        if ($strPrefix == 'be_') {
-            return $arrTemplates;
-        }
+        $arrTemplates = \Controller::getTemplateGroup($strPrefix);
 
         // Try to select the shop configs
         try {
@@ -160,8 +136,6 @@ class Backend extends Contao_Backend
         if (null !== $objConfig) {
             while ($objConfig->next()) {
                 if ($objConfig->templateGroup != '') {
-
-                    $strFolder          = sprintf($GLOBALS['TL_LANG']['MSC']['templatesConfig'], $objConfig->name);
                     $arrConfigTemplates = glob(TL_ROOT . '/' . $objConfig->templateGroup . '/' . $strPrefix . '*');
 
                     if (is_array($arrConfigTemplates)) {
@@ -169,37 +143,10 @@ class Backend extends Contao_Backend
 
                             $strTemplate = basename($strFile, strrchr($strFile, '.'));
 
-                            if (!isset($arrTemplates[''][$strTemplate])) {
-                                $arrTemplates[$strFolder][$strTemplate] = $strTemplate;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Try to select the themes (see #5210)
-        try {
-            $objTheme = \ThemeModel::findAll(array('order' => 'name'));
-        } catch (\Exception $e) {
-            $objTheme = null;
-        }
-
-        // Add the theme templates
-        if (null !== $objTheme) {
-            while ($objTheme->next()) {
-                if ($objTheme->templates != '') {
-
-                    $strFolder         = sprintf($GLOBALS['TL_LANG']['MSC']['templatesTheme'], $objTheme->name);
-                    $arrThemeTemplates = glob(TL_ROOT . '/' . $objTheme->templates . '/' . $strPrefix . '*');
-
-                    if (is_array($arrThemeTemplates)) {
-                        foreach ($arrThemeTemplates as $strFile) {
-
-                            $strTemplate = basename($strFile, strrchr($strFile, '.'));
-
-                            if (!isset($arrTemplates[''][$strTemplate])) {
-                                $arrTemplates[$strFolder][$strTemplate] = $strTemplate;
+                            if (!isset($arrTemplates[$strTemplate])) {
+                                $arrTemplates[$strTemplate] = $strTemplate;
+                            } else {
+                                $arrTemplates[$strTemplate] = substr($arrTemplates[$strTemplate], 0, -1) . ', ' . sprintf($GLOBALS['TL_LANG']['MSC']['templatesConfig'], $objConfig->name) . ')';
                             }
                         }
                     }
@@ -219,8 +166,10 @@ class Backend extends Contao_Backend
     {
         $arrStatus = array();
         if (($objStatus = OrderStatus::findAll(array('order' => 'sorting'))) !== null) {
-            while ($objStatus->next()) {
-                $arrStatus[$objStatus->id] = $objStatus->current()->getName();
+
+            /** @type OrderStatus $status */
+            foreach ($objStatus as $status) {
+                $arrStatus[$status->id] = $status->getName();
             }
         }
 
@@ -234,7 +183,10 @@ class Backend extends Contao_Backend
      */
     public function getOrderMessages()
     {
-        if (!\Database::getInstance()->tableExists(\Isotope\Model\OrderStatus::getTable()) || !\BackendUser::getInstance()->hasAccess('iso_orders', 'modules')) {
+        /** @type \BackendUser $objUser */
+        $objUser = \BackendUser::getInstance();
+
+        if (!\Database::getInstance()->tableExists(\Isotope\Model\OrderStatus::getTable()) || !$objUser->hasAccess('iso_orders', 'modules')) {
             return '';
         }
 
@@ -264,7 +216,7 @@ class Backend extends Contao_Backend
     /**
      * Returns an array of all allowed product IDs and variant IDs for the current backend user
      * @return array|bool
-     * @deprecated
+     * @deprecated will be removed in Isotope 3.0
      */
     public static function getAllowedProductIds()
     {
@@ -327,47 +279,14 @@ class Backend extends Contao_Backend
     public function executePostActions($action, $dc)
     {
         switch ($action) {
-            case 'loadProductTree':
-                $arrData['strTable'] = $dc->table;
-                $arrData['id']       = strlen($this->strAjaxName) ? $this->strAjaxName : $dc->id;
-                $arrData['name']     = \Input::post('name');
-
-                $this->loadDataContainer($dc->table);
-                $arrData = array_merge($GLOBALS['TL_DCA'][$dc->table]['fields'][$arrData['name']]['eval'], $arrData);
-
-                $objWidget = new $GLOBALS['BE_FFL']['productTree']($arrData, $dc);
-
-                echo json_encode(array
-                                 (
-                                 'content' => $objWidget->generateAjax($this->strAjaxId, \Input::post('field'), intval(\Input::post('level'))),
-                                 'token'   => REQUEST_TOKEN
-                                 ));
-                exit;
-
-            case 'loadProductGroupTree':
-                $arrData['strTable'] = $dc->table;
-                $arrData['id']       = strlen($this->strAjaxName) ? $this->strAjaxName : $dc->id;
-                $arrData['name']     = \Input::post('name');
-
-                $objWidget = new $GLOBALS['BE_FFL']['productGroupSelector']($arrData, $dc);
-                echo $objWidget->generateAjax($this->strAjaxId, \Input::post('field'), intval(\Input::post('level')));
-                exit;
-
             case 'uploadMediaManager':
                 $arrData['strTable'] = $dc->table;
                 $arrData['id']       = strlen($this->strAjaxName) ? $this->strAjaxName : $dc->id;
                 $arrData['name']     = \Input::post('name');
 
+                /** @type \Isotope\Widget\MediaManager $objWidget */
                 $objWidget = new $GLOBALS['BE_FFL']['mediaManager']($arrData, $dc);
-                $strFile   = $objWidget->validateUpload();
-
-                if ($objWidget->hasErrors()) {
-                    $arrResponse = array('success' => false, 'error' => $objWidget->getErrorAsString(), 'preventRetry' => true);
-                } else {
-                    $arrResponse = array('success' => true, 'file' => $strFile);
-                }
-
-                echo json_encode($arrResponse);
+                $objWidget->ajaxUpload();
                 exit;
 
             case 'reloadMediaManager':
@@ -395,7 +314,7 @@ class Backend extends Contao_Backend
                 if ($GLOBALS['TL_DCA'][$dc->table]['config']['dataContainer'] == 'File') {
                     $varValue = $GLOBALS['TL_CONFIG'][$strField];
                 } elseif ($intId > 0 && $this->Database->tableExists($dc->table)) {
-                    $objRow = $this->Database->prepare("SELECT * FROM " . $dc->table . " WHERE id=?")
+                    $objRow = $this->Database->prepare("SELECT * FROM {$dc->table} WHERE id=?")
                                              ->execute($intId);
 
                     // The record does not exist
@@ -426,6 +345,7 @@ class Backend extends Contao_Backend
                 $arrAttribs['strField']     = $strField;
                 $arrAttribs['activeRecord'] = $dc->activeRecord;
 
+                /** @type \Isotope\Widget\MediaManager $objWidget */
                 $objWidget = new $GLOBALS['BE_FFL']['mediaManager']($arrAttribs);
                 echo $objWidget->generate();
                 exit;

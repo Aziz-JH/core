@@ -145,13 +145,16 @@ class Postfinance extends PSP implements IsotopePayment, IsotopePostsale
         $i = 1;
 
         // Need to take the items from the cart as they're not transferred to the order here yet
+        // @todo this is no longer true, and the price should probably be taken from the collection item ($objItem->getPrice())
         foreach (Isotope::getCart()->getItems() as $objItem) {
 
             $objPrice = $objItem->getProduct()->getPrice();
             $fltVat = Isotope::roundPrice((100 / $objPrice->getNetAmount() * $objPrice->getGrossAmount()) - 100, false);
 
             $arrOrder['ITEMID' . $i]        = $objItem->id;
-            $arrOrder['ITEMNAME' . $i]      = substr($objItem->getName(), 40);
+            $arrOrder['ITEMNAME' . $i]      = substr(\String::restoreBasicEntities(
+                $objItem->getName()
+            ), 40);
             $arrOrder['ITEMPRICE' . $i]     = $objPrice->getNetAmount();
             $arrOrder['ITEMQUANT' . $i]     = $objItem->quantity;
             $arrOrder['ITEMVATCODE' . $i]   = $fltVat . '%';
