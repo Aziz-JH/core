@@ -12,6 +12,8 @@
 
 namespace Isotope\Collection;
 
+use Isotope\Interfaces\IsotopeProduct;
+
 
 /**
  * Class AttributeOption
@@ -25,14 +27,17 @@ class AttributeOption extends \Model\Collection
     /**
      * Get array structure suitable for a frontend widget
      *
+     * @param IsotopeProduct $objProduct
+     * @param bool           $blnPriceInLabel
+     *
      * @return array
      */
-    public function getArrayForFrontendWidget()
+    public function getArrayForFrontendWidget(IsotopeProduct $objProduct = null, $blnPriceInLabel = true)
     {
         $arrOptions = array();
 
         foreach ($this->getModels() as $objModel) {
-            $arrOptions[] = $objModel->getAsArray();
+            $arrOptions[] = $objModel->getAsArray($objProduct, $blnPriceInLabel);
         }
 
         return $arrOptions;

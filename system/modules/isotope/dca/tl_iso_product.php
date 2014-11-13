@@ -429,7 +429,7 @@ $GLOBALS['TL_DCA']['tl_iso_product'] = array
             (
                 'listCallback'      => array('Isotope\Backend\ProductPrice\Callback', 'generateWizardList'),
                 'applyButtonLabel'  => &$GLOBALS['TL_LANG']['tl_iso_product']['prices']['apply_and_close'],
-                'tl_class'          =>'clr'
+                'tl_class'          =>'clr',
             ),
         ),
         'price_tiers' => array

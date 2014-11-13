@@ -15,6 +15,7 @@ namespace Isotope\Model\ProductCollection;
 use Haste\Generator\RowClass;
 use Haste\Haste;
 use Haste\Util\Format;
+use Isotope\Interfaces\IsotopeOrderStatusAware;
 use Isotope\Interfaces\IsotopeProductCollection;
 use Isotope\Isotope;
 use Isotope\Model\Address;
@@ -34,6 +35,16 @@ use NotificationCenter\Model\Notification;
  * Provide methods to handle Isotope orders.
  *
  * @method static Order findOneBy(string $strColumn, $varValue, array $arrOptions=array())
+ *
+ * @property int    locked
+ * @property array  checkout_info
+ * @property array  payment_data
+ * @property array  shipping_data
+ * @property string document_number
+ * @property int    order_status
+ * @property int    date_paid
+ * @property int    date_shipped
+ * @property string notes
  */
 class Order extends ProductCollection implements IsotopeProductCollection
 {
@@ -284,6 +295,14 @@ class Order extends ProductCollection implements IsotopeProductCollection
                 $objCallback = \System::importStatic($callback[0]);
                 $objCallback->$callback[1]($this, $intOldStatus, $objNewStatus);
             }
+        }
+
+        // Trigger payment and shipping methods that implement the interface
+        if (($objPayment = $this->getPaymentMethod()) !== null && $objPayment instanceof IsotopeOrderStatusAware) {
+            $objPayment->onOrderStatusUpdate($this, $intOldStatus, $objNewStatus);
+        }
+        if (($objShipping = $this->getShippingMethod()) !== null && $objShipping instanceof IsotopeOrderStatusAware) {
+            $objShipping->onOrderStatusUpdate($this, $intOldStatus, $objNewStatus);
         }
 
         return true;

@@ -115,15 +115,49 @@ abstract class Payment extends TypeAgent
             return false;
         }
 
-        $arrTypes = deserialize($this->product_types);
 
-        if (is_array($arrTypes) && !empty($arrTypes)) {
+
+
+
+        $arrConfigTypes = deserialize($this->product_types);
+
+        if (is_array($arrConfigTypes) && !empty($arrConfigTypes)) {
             $arrItems = Isotope::getCart()->getItems();
+            $arrItemTypes = array();
 
             foreach ($arrItems as $objItem) {
-                if (!$objItem->hasProduct() || !in_array($objItem->getProduct()->type, $arrTypes)) {
+                if ($objItem->hasProduct()) {
+                    $arrItemTypes[] = $objItem->getProduct()->type;
+
+                } elseif ($this->product_types_condition == 'onlyAvailable') {
+                    // If one product in cart is not of given type, shipping method is not available
                     return false;
                 }
+            }
+
+            $arrItemTypes = array_unique($arrItemTypes);
+
+            switch ($this->product_types_condition) {
+                case 'onlyAvailable':
+                    if (count(array_diff($arrItemTypes, $arrConfigTypes)) > 0) {
+                        return false;
+                    }
+                    break;
+
+                case 'oneAvailable':
+                    if (count(array_intersect($arrConfigTypes, $arrItemTypes)) == 0) {
+                        return false;
+                    }
+                    break;
+
+                case 'allAvailable':
+                    if (count(array_intersect($arrConfigTypes, $arrItemTypes)) != count($arrConfigTypes)) {
+                        return false;
+                    }
+                    break;
+
+                default:
+                    throw new \UnexpectedValueException('Unknown product type condition "' . $this->product_types_condition . '"');
             }
         }
 
@@ -244,6 +278,7 @@ abstract class Payment extends TypeAgent
 
     /**
      * Get the checkout surcharge for this payment method
+     *
      * @return  \Isotope\Model\ProductCollectionSurcharge\Payment|null
      */
     public function getSurcharge($objCollection)
@@ -260,7 +295,8 @@ abstract class Payment extends TypeAgent
      * Validate a credit card number and return the card type.
      * http://regexlib.com/UserPatterns.aspx?authorid=7128ecda-5ab1-451d-98d9-f94d2a453b37
      *
-     * @param string
+     * @param string $strNumber
+     *
      * @return mixed
      */
     protected static function validateCreditCard($strNumber)
@@ -299,7 +335,9 @@ abstract class Payment extends TypeAgent
 
     /**
      * Return a list of valid credit card types for this payment module
+     *
      * @return array
+     * @deprecated Deprecated since 2.2, to be removed in 3.0. Create your own DCA field instead.
      */
     public static function getAllowedCCTypes()
     {

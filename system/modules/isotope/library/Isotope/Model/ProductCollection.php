@@ -29,11 +29,25 @@ use Isotope\Model\Shipping;
 /**
  * Class ProductCollection
  *
- * Provide methods to handle Isotope product collections.
- * @copyright  Isotope eCommerce Workgroup 2009-2012
- * @author     Andreas Schempp <andreas.schempp@terminal42.ch>
- * @author     Fred Bliss <fred.bliss@intelligentspark.com>
- * @author     Yanick Witschi <yanick.witschi@terminal42.ch>
+ * @property int    id
+ * @property int    tstamp
+ * @property string type
+ * @property int    member
+ * @property int    store_id
+ * @property mixed  settings
+ * @property int    source_collection_id
+ * @property string uniqid
+ * @property int    config_id
+ * @property int    payment_id
+ * @property int    shipping_id
+ * @property int    billing_address_id
+ * @property int    shipping_address_id
+ * @property float  subtotal
+ * @property float  tax_free_subtotal
+ * @property float  total
+ * @property float  tax_free_total
+ * @property string currency
+ * @property string language
  */
 abstract class ProductCollection extends TypeAgent
 {
@@ -561,8 +575,8 @@ abstract class ProductCollection extends TypeAgent
         $this->pageId = (int) $objPage->id;
         $this->language = (string) $GLOBALS['TL_LANGUAGE'];
 
-        $this->updateDatabase();
         $this->createPrivateAddresses();
+        $this->updateDatabase();
 
         // Add surcharges to the collection
         $sorting = 128;
@@ -805,7 +819,7 @@ abstract class ProductCollection extends TypeAgent
     {
         $strClass = array_search(get_class($objProduct), Product::getModelTypes());
 
-        $objItem = ProductCollectionItem::findOneBy(array('pid=?', 'type=?', 'product_id=?', 'options=?'), array($this->id, $strClass, $objProduct->{$objProduct->getPk()}, serialize($objProduct->getOptions())));
+        $objItem = ProductCollectionItem::findOneBy(array('pid=?', 'type=?', 'product_id=?', 'configuration=?'), array($this->id, $strClass, $objProduct->{$objProduct->getPk()}, serialize($objProduct->getOptions())));
 
         return $objItem;
     }
@@ -902,7 +916,7 @@ abstract class ProductCollection extends TypeAgent
             $objItem->product_id     = $objProduct->{$objProduct->getPk()};
             $objItem->sku            = (string) $objProduct->sku;
             $objItem->name           = (string) $objProduct->name;
-            $objItem->options        = $objProduct->getOptions();
+            $objItem->configuration  = $objProduct->getOptions(); // @todo use getConfiguration or similar in Isotope 3.0
             $objItem->quantity       = (int) $intQuantity;
             $objItem->price          = (float) ($objProduct->getPrice($this) ? $objProduct->getPrice($this)->getAmount((int) $intQuantity) : 0);
             $objItem->tax_free_price = (float) ($objProduct->getPrice($this) ? $objProduct->getPrice($this)->getNetAmount((int) $intQuantity) : 0);
@@ -1233,7 +1247,7 @@ abstract class ProductCollection extends TypeAgent
         $objTemplate->subtotal   = Isotope::formatPriceWithCurrency($this->getSubtotal());
         $objTemplate->total      = Isotope::formatPriceWithCurrency($this->getTotal());
 
-        $objTemplate->generateAttribute = function ($strAttribute, ProductCollectionItem $objItem) {
+        $objTemplate->generateAttribute = function ($strAttribute, ProductCollectionItem $objItem, array $arrOptions = array()) {
 
             if (!$objItem->hasProduct()) {
                 return '';
@@ -1245,7 +1259,7 @@ abstract class ProductCollection extends TypeAgent
                 throw new \InvalidArgumentException($strAttribute . ' is not a valid attribute');
             }
 
-            return $objAttribute->generate($objItem->getProduct());
+            return $objAttribute->generate($objItem->getProduct(), $arrOptions);
         };
 
         $objTemplate->getGallery = function ($strAttribute, ProductCollectionItem $objItem) use ($arrConfig, &$arrGalleries) {
@@ -1373,12 +1387,14 @@ abstract class ProductCollection extends TypeAgent
             'sku'               => $objItem->getSku(),
             'name'              => $objItem->getName(),
             'options'           => Isotope::formatOptions($objItem->getOptions()),
+            'configuration'     => $objItem->getConfiguration(),
             'quantity'          => $objItem->quantity,
             'price'             => Isotope::formatPriceWithCurrency($objItem->getPrice()),
             'tax_free_price'    => Isotope::formatPriceWithCurrency($objItem->getTaxFreePrice()),
             'total'             => Isotope::formatPriceWithCurrency($objItem->getTotalPrice()),
             'tax_free_total'    => Isotope::formatPriceWithCurrency($objItem->getTaxFreeTotalPrice()),
             'tax_id'            => $objItem->tax_id,
+            'href'              => false,
             'hasProduct'        => $blnHasProduct,
             'product'           => $objProduct,
             'item'              => $objItem,
@@ -1386,7 +1402,7 @@ abstract class ProductCollection extends TypeAgent
             'rowClass'          => trim('product ' . (($blnHasProduct && $objProduct->isNew()) ? 'new ' : '') . $arrCSS[1]),
         );
 
-        if (null !== $objItem->getRelated('jumpTo') && $blnHasProduct) {
+        if (null !== $objItem->getRelated('jumpTo') && $blnHasProduct && $objProduct->isAvailableInFrontend()) {
             $arrItem['href'] = $objProduct->generateUrl($objItem->getRelated('jumpTo'));
         }
 
@@ -1515,6 +1531,7 @@ abstract class ProductCollection extends TypeAgent
                 $objAddress->pid    = $this->member;
                 $objAddress->tstamp = time();
                 $objAddress->ptable = \MemberModel::getTable();
+                $objAddress->store_id = $this->store_id;
                 $objAddress->save();
 
                 $this->updateDefaultAddress($objAddress);
@@ -1529,6 +1546,7 @@ abstract class ProductCollection extends TypeAgent
                 $objAddress->pid    = $this->member;
                 $objAddress->tstamp = time();
                 $objAddress->ptable = \MemberModel::getTable();
+                $objAddress->store_id = $this->store_id;
                 $objAddress->save();
 
                 $this->updateDefaultAddress($objAddress);
@@ -1541,6 +1559,7 @@ abstract class ProductCollection extends TypeAgent
             $objNew->pid    = $this->id;
             $objNew->tstamp = time();
             $objNew->ptable = static::$strTable;
+            $objNew->store_id = $this->store_id;
             $objNew->save();
 
             $this->setBillingAddress($objNew);
@@ -1548,7 +1567,7 @@ abstract class ProductCollection extends TypeAgent
             if (null !== $objShippingAddress && $objBillingAddress->id == $objShippingAddress->id) {
                 $this->setShippingAddress($objNew);
 
-                // Return here, we do not need to check shipping address
+                // Stop here, we do not need to check shipping address
                 return;
             }
         }
@@ -1559,6 +1578,7 @@ abstract class ProductCollection extends TypeAgent
             $objNew->pid    = $this->id;
             $objNew->tstamp = time();
             $objNew->ptable = static::$strTable;
+            $objNew->store_id = $this->store_id;
             $objNew->save();
 
             $this->setShippingAddress($objNew);

@@ -170,19 +170,21 @@ if ($_GET['do'] == 'iso_setup')
  */
 $GLOBALS['FE_MOD']['isotope'] = array
 (
-    'iso_productlist'           => 'Isotope\Module\ProductList',
-    'iso_productvariantlist'    => 'Isotope\Module\ProductVariantList',
-    'iso_productreader'         => 'Isotope\Module\ProductReader',
-    'iso_cart'                  => 'Isotope\Module\Cart',
-    'iso_checkout'              => 'Isotope\Module\Checkout',
-    'iso_productfilter'         => 'Isotope\Module\ProductFilter',
-    'iso_cumulativefilter'      => 'Isotope\Module\CumulativeFilter',
-    'iso_orderhistory'          => 'Isotope\Module\OrderHistory',
-    'iso_orderdetails'          => 'Isotope\Module\OrderDetails',
-    'iso_configswitcher'        => 'Isotope\Module\ConfigSwitcher',
-    'iso_addressbook'           => 'Isotope\Module\AddressBook',
-    'iso_relatedproducts'       => 'Isotope\Module\RelatedProducts',
-    'iso_messages'              => 'Isotope\Module\Messages',
+    'iso_productlist'               => 'Isotope\Module\ProductList',
+    'iso_productvariantlist'        => 'Isotope\Module\ProductVariantList',
+    'iso_productreader'             => 'Isotope\Module\ProductReader',
+    'iso_cart'                      => 'Isotope\Module\Cart',
+    'iso_checkout'                  => 'Isotope\Module\Checkout',
+    'iso_productfilter'             => 'Isotope\Module\ProductFilter',
+    'iso_cumulativefilter'          => 'Isotope\Module\CumulativeFilter',
+    'iso_orderhistory'              => 'Isotope\Module\OrderHistory',
+    'iso_orderdetails'              => 'Isotope\Module\OrderDetails',
+    'iso_configswitcher'            => 'Isotope\Module\ConfigSwitcher',
+    'iso_addressbook'               => 'Isotope\Module\AddressBook',
+    'iso_relatedproducts'           => 'Isotope\Module\RelatedProducts',
+    'iso_messages'                  => 'Isotope\Module\Messages',
+    'iso_shipping_calculator'       => 'Isotope\Module\ShippingCalculator',
+    'iso_cart_address'              => 'Isotope\Module\CartAddress',
 );
 
 
@@ -206,6 +208,7 @@ $GLOBALS['BE_FFL']['productGroupSelector']   = 'Isotope\Widget\ProductGroupSelec
 \Isotope\Model\Payment::registerModelType('postfinance', 'Isotope\Model\Payment\Postfinance');
 \Isotope\Model\Payment::registerModelType('viveum', 'Isotope\Model\Payment\Viveum');
 \Isotope\Model\Payment::registerModelType('saferpay', 'Isotope\Model\Payment\Saferpay');
+\Isotope\Model\Payment::registerModelType('billpay_saferpay', 'Isotope\Model\Payment\BillpayWithSaferpay');
 \Isotope\Model\Payment::registerModelType('sparkasse', 'Isotope\Model\Payment\Sparkasse');
 \Isotope\Model\Payment::registerModelType('sofortueberweisung', 'Isotope\Model\Payment\Sofortueberweisung');
 \Isotope\Model\Payment::registerModelType('worldpay', 'Isotope\Model\Payment\Worldpay');
@@ -357,6 +360,7 @@ $GLOBALS['ISO_INTEGRITY'] = array
 (
     '\Isotope\IntegrityCheck\PriceTable',
     '\Isotope\IntegrityCheck\VariantOrphans',
+    '\Isotope\IntegrityCheck\AttributeOptionOrphans',
     '\Isotope\IntegrityCheck\UnusedRules'
 );
 
@@ -413,6 +417,14 @@ if (\Config::getInstance()->isComplete()) {
     $GLOBALS['ISO_HOOKS']['buttons'][]                      = array('Isotope\Isotope', 'defaultButtons');
     $GLOBALS['ISO_HOOKS']['findSurchargesForCollection'][]  = array('Isotope\Frontend', 'findShippingAndPaymentSurcharges');
     $GLOBALS['ISO_HOOKS']['postCheckout'][]                 = array('Isotope\Analytics', 'trackOrder');
+    $GLOBALS['ISO_HOOKS']['calculatePrice'][]               = array('Isotope\Frontend', 'addOptionsPrice');
+    $GLOBALS['ISO_HOOKS']['orderConditions'][]              = array('Isotope\Model\Payment\BillpayWithSaferpay', 'addOrderCondition');
+    $GLOBALS['ISO_HOOKS']['generateDocumentTemplate'][]     = array('Isotope\Model\Payment\BillpayWithSaferpay', 'addToDocumentTemplate');
+
+    // Set module and module id for payment and/or shipping modules
+    if (TL_MODE == 'FE') {
+        $GLOBALS['ISO_HOOKS']['initializePostsale'][]       = array('Isotope\Frontend', 'setPostsaleModuleSettings');
+    }
 }
 
 

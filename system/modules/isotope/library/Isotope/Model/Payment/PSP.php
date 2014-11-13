@@ -48,11 +48,15 @@ abstract class PSP extends Payment
 
 
     /**
-     * Process post-sale requestion from the PSP payment server.
+     * Process post-sale request from the PSP payment server.
+     *
      * @param   IsotopeProductCollection
+     * @return  boolean Not needed when called by postsale.php but when called internally by processPayment
      */
     public function processPostsale(IsotopeProductCollection $objOrder)
     {
+        /** @type Order $objOrder */
+
         if (!$this->validateSHASign()) {
             \System::log('Received invalid postsale data for order ID "' . $objOrder->id . '"', __METHOD__, TL_ERROR);
             return false;
@@ -67,6 +71,7 @@ abstract class PSP extends Payment
         // Validate payment status
         switch ($this->getRequestData('STATUS')) {
 
+            /** @noinspection PhpMissingBreakStatementInspection */
             case 9:  // Zahlung beantragt (Authorize & Capture)
                 $objOrder->date_paid = time();
                 // no break
@@ -101,6 +106,8 @@ abstract class PSP extends Payment
             \System::log('Post-Sale checkout for Order ID "' . $objOrder->id . '" failed', __METHOD__, TL_ERROR);
             return false;
         }
+        
+        $objOrder->payment_data = json_encode($this->getRawRequestData());
 
         $objOrder->updateOrderStatus($intStatus);
         $objOrder->save();
@@ -151,11 +158,22 @@ abstract class PSP extends Payment
         $objTemplate->setData($this->arrData);
 
         $objTemplate->params   = $arrParams;
-        $objTemplate->headline = $GLOBALS['TL_LANG']['MSC']['pay_with_redirect'][0];
-        $objTemplate->message  = $GLOBALS['TL_LANG']['MSC']['pay_with_redirect'][1];
-        $objTemplate->slabel   = $GLOBALS['TL_LANG']['MSC']['pay_with_redirect'][2];
+        $objTemplate->headline = specialchars($GLOBALS['TL_LANG']['MSC']['pay_with_redirect'][0]);
+        $objTemplate->message  = specialchars($GLOBALS['TL_LANG']['MSC']['pay_with_redirect'][1]);
+        $objTemplate->slabel   = specialchars($GLOBALS['TL_LANG']['MSC']['pay_with_redirect'][2]);
+        $objTemplate->noscript = specialchars($GLOBALS['TL_LANG']['MSC']['pay_with_redirect'][3]);
 
         return $objTemplate->parse();
+    }
+
+    /**
+     * Gets the available payment methods
+     *
+     * @return  array
+     */
+    public function getPaymentMethods()
+    {
+        return array();
     }
 
     /**
@@ -203,6 +221,20 @@ abstract class PSP extends Payment
         }
 
         return \Input::post($strKey);
+    }
+
+    /**
+     * Gets the raw request data based on the chosen HTTP method
+     *
+     * @return  array
+     */
+    private function getRawRequestData()
+    {
+        if ($this->psp_http_method == 'GET') {
+            return $_GET;
+        }
+
+        return $_POST;
     }
 
 

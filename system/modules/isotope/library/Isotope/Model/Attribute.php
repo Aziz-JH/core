@@ -12,7 +12,6 @@
 
 namespace Isotope\Model;
 
-use Haste\Haste;
 use Haste\Util\Format;
 use Isotope\Interfaces\IsotopeAttributeForVariants;
 use Isotope\Interfaces\IsotopeAttributeWithOptions;
@@ -61,6 +60,12 @@ abstract class Attribute extends TypeAgent
      * @var array
      */
     protected static $arrModelTypes = array();
+
+    /**
+     * Holds a map for field name to ID
+     * @type array
+     */
+    protected static $arrFieldNameMap = array();
 
     /**
      * Return true if attribute is a variant option
@@ -411,8 +416,10 @@ abstract class Attribute extends TypeAgent
 
     /**
      * Generate HTML list for array values
-     * @param   array
-     * @return  string
+     *
+     * @param array $arrValues
+     *
+     * @return string
      */
     protected function generateList(array $arrValues)
     {
@@ -433,14 +440,15 @@ abstract class Attribute extends TypeAgent
 
     /**
      * Get list of system columns
-     * @return  array
+     *
+     * @return array
      */
     public static function getSystemColumnsFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrDCA    = &$GLOBALS['TL_DCA']['tl_iso_product']['fields'];
@@ -457,14 +465,15 @@ abstract class Attribute extends TypeAgent
 
     /**
      * Return list of variant option fields
-     * @return  array
+     *
+     * @return array
      */
     public static function getVariantOptionFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrAttributes = &$GLOBALS['TL_DCA']['tl_iso_product']['attributes'];
@@ -481,14 +490,15 @@ abstract class Attribute extends TypeAgent
 
     /**
      * Return list of fields that are customer defined
-     * @return  array
+     *
+     * @return array
      */
     public static function getCustomerDefinedFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrDCA    = &$GLOBALS['TL_DCA']['tl_iso_product']['fields'];
@@ -504,15 +514,52 @@ abstract class Attribute extends TypeAgent
     }
 
     /**
+     * Return array of attributes that have price relevant information
+     *
+     * @return array
+     */
+    public static function getPricedFields()
+    {
+        static $arrFields;
+
+        if (null === $arrFields) {
+            $arrFields = \Database::getInstance()->query("
+                SELECT a.field_name
+                FROM tl_iso_attribute a
+                JOIN tl_iso_attribute_option o ON a.id=o.pid
+                WHERE
+                  a.optionsSource='table'
+                  AND o.ptable='tl_iso_attribute'
+                  AND o.published='1'
+                  AND o.price!=''
+
+                UNION
+
+                SELECT a.field_name
+                FROM tl_iso_attribute a
+                JOIN tl_iso_attribute_option o ON a.field_name=o.field_name
+                WHERE
+                  a.optionsSource='product'
+                  AND o.ptable='tl_iso_product'
+                  AND o.published='1'
+                  AND o.price!=''
+            ")->fetchEach('field_name');
+        }
+
+        return $arrFields;
+    }
+
+    /**
      * Return list of fields that are multilingual
-     * @return  array
+     *
+     * @return array
      */
     public static function getMultilingualFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrDCA    = &$GLOBALS['TL_DCA']['tl_iso_product']['fields'];
@@ -529,14 +576,15 @@ abstract class Attribute extends TypeAgent
 
     /**
      * Return list of fields that have fetch_fallback set
-     * @return  array
+     *
+     * @return array
      */
     public static function getFetchFallbackFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrDCA    = &$GLOBALS['TL_DCA']['tl_iso_product']['fields'];
@@ -554,14 +602,15 @@ abstract class Attribute extends TypeAgent
     /**
      * Return list of dynamic fields
      * Dynamic fields cannot be filtered on database level (e.g. product price)
-     * @return  array
+     *
+     * @return array
      */
     public static function getDynamicAttributeFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrDCA    = &$GLOBALS['TL_DCA']['tl_iso_product']['fields'];
@@ -579,14 +628,15 @@ abstract class Attribute extends TypeAgent
     /**
      * Return list of fixed fields
      * Fixed fields cannot be disabled in product type config
-     * @return  array
+     *
+     * @return array
      */
     public static function getFixedFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrDCA    = &$GLOBALS['TL_DCA']['tl_iso_product']['fields'];
@@ -604,14 +654,15 @@ abstract class Attribute extends TypeAgent
     /**
      * Return list of fixed fields
      * Fixed fields cannot be disabled in product type config
-     * @return  array
+     *
+     * @return array
      */
     public static function getVariantFixedFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrDCA    = &$GLOBALS['TL_DCA']['tl_iso_product']['fields'];
@@ -628,14 +679,15 @@ abstract class Attribute extends TypeAgent
 
     /**
      * Return list of fields that must be inherited by variants
-     * @return  array
+     *
+     * @return array
      */
     public static function getInheritFields()
     {
         static $arrFields;
 
         if (null === $arrFields) {
-            Haste::getInstance()->call('loadDataContainer', 'tl_iso_product');
+            \Controller::loadDataContainer('tl_iso_product');
 
             $arrFields = array();
             $arrDCA    = &$GLOBALS['TL_DCA']['tl_iso_product']['fields'];
@@ -657,7 +709,7 @@ abstract class Attribute extends TypeAgent
      *
      * @return \Isotope\Model\Attribute[]|null The model collection or null if the result is empty
      */
-    public static function findValid(array $arrOptions=array())
+    public static function findValid(array $arrOptions = array())
     {
         $t = static::getTable();
 
@@ -672,5 +724,33 @@ abstract class Attribute extends TypeAgent
         $arrOptions['column'][] = "$t.field_name!=''";
 
         return static::findAll($arrOptions);
+    }
+
+    /**
+     * Get an attribute by database field name
+     *
+     * @param string $strField
+     * @param array  $arrOptions
+     *
+     * @return \Model|null
+     */
+    public static function findByFieldName($strField, array $arrOptions = array())
+    {
+        if (!isset(static::$arrFieldNameMap[$strField])) {
+            $objAttribute = static::findOneBy('field_name', $strField, $arrOptions);
+
+            if (null === $objAttribute) {
+                static::$arrFieldNameMap[$strField] = false;
+            } else {
+                static::$arrFieldNameMap[$strField] = $objAttribute->id;
+            }
+
+            return $objAttribute;
+
+        } elseif (static::$arrFieldNameMap[$strField] === false) {
+            return null;
+        }
+
+        return static::findByPk(static::$arrFieldNameMap[$strField], $arrOptions);
     }
 }

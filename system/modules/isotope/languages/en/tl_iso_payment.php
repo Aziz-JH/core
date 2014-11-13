@@ -23,6 +23,7 @@ $GLOBALS['TL_LANG']['tl_iso_payment']['maximum_total']                          
 $GLOBALS['TL_LANG']['tl_iso_payment']['countries']                              = array('Available countries', 'Select the countries where this payment method may be used (customer\'s billing address).');
 $GLOBALS['TL_LANG']['tl_iso_payment']['shipping_modules']                       = array('Shipping methods', 'You can restrict this payment method to certain shipping methods (e.g. Cash only when picking up).');
 $GLOBALS['TL_LANG']['tl_iso_payment']['product_types']                          = array('Product types', 'You can restrict this payment method to certain product types. If the cart contains a product type you have not selected, the payment method is not available.');
+$GLOBALS['TL_LANG']['tl_iso_payment']['product_types_condition']                = array('Product type condition', 'Select how the product type filter should be applied.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['config_ids']                             = array('Store configurations', 'You can restrict this payment method to certain shop configurations.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['price']                                  = array('Price', 'Enter a price or percent value (e.g. "10" or "10%").');
 $GLOBALS['TL_LANG']['tl_iso_payment']['tax_class']                              = array('Tax Class', 'Please select a tax class for the price.');
@@ -41,6 +42,7 @@ $GLOBALS['TL_LANG']['tl_iso_payment']['psp_hash_method']                        
 $GLOBALS['TL_LANG']['tl_iso_payment']['psp_hash_in']                            = array('SHA-IN signature', 'This will be used to validate the server to server communication.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['psp_hash_out']                           = array('SHA-OUT signature', 'This will be used to validate the server to server communication.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['psp_dynamic_template']                   = array('Dynamic template URL', 'Enter a valid <strong>absolute</strong> URL to a dynamic template here.');
+$GLOBALS['TL_LANG']['tl_iso_payment']['psp_payment_method']                     = array('Payment method', 'You can select a payment method here. Make sure your PSP contract also includes this payment method! If you don\'t select anything at all here, the customer will have to choose the preferred payment method on the PSP interface!');
 $GLOBALS['TL_LANG']['tl_iso_payment']['requireCCV']                             = array('Require Card Code Verification (CCV) Number', 'Choose this option if you would like to increase transaction security by requiring the card code verification number.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['allowed_cc_types']                       = array('Allowed Credit Card Types', 'Select which credit cards the payment method accepts.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['datatrans_id']                           = array('Merchant-ID', 'Please enter your merchant ID.');
@@ -55,6 +57,7 @@ $GLOBALS['TL_LANG']['tl_iso_payment']['sofortueberweisung_project_password']    
 $GLOBALS['TL_LANG']['tl_iso_payment']['saferpay_accountid']                     = array('Saferpay Account-ID', 'Please enter your unique Saferpay account id.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['saferpay_description']                   = array('Checkout description', 'The customer will see this description on the Saferpay checkout page.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['saferpay_vtconfig']                      = array('Payment page configuration (VTCONFIG)', 'You can create different Payment Page configurations. If you want to use a specific one of them, enter its "Parameter for the request" value here.');
+$GLOBALS['TL_LANG']['tl_iso_payment']['saferpay_paymentmethods']                = array('Payment methods', 'You can limit the available payment methods (e.g. only MasterCard). If you do not select anything, all payment methods will be allowed.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['expercash_popupId']                      = array('ExperCash Popup-ID', 'Geben Sie die Popup-ID aus Ihrem ExperCash Portal ein.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['expercash_profile']                      = array('ExperCash Profile', 'Geben Sie die dreistellige Profilnummer ein.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['expercash_popupKey']                     = array('ExperCash Popup-Key', 'Geben Sie den Popup-Key aus Ihrem ExperCash Portal ein.');
@@ -94,6 +97,9 @@ $GLOBALS['TL_LANG']['tl_iso_payment']['show']                       = array('Pay
 $GLOBALS['TL_LANG']['tl_iso_payment']['capture']                                                = array('Authorize and Capture', 'Transactions of this type will be sent for authorization. The transaction will be automatically picked up for settlement if approved.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['auth']                                                   = array('Authorize Only', 'Transactions of this type are submitted if the merchant wishes to validate the credit card for the amount of the goods sold. If the merchant does not have goods in stock or wishes to review orders before shipping the goods, this transaction type should be submitted.');
 $GLOBALS['TL_LANG']['tl_iso_payment']['no_shipping']                                            = 'Orders without shipping';
+$GLOBALS['TL_LANG']['tl_iso_payment']['onlyAvailable']                                          = 'Enable if only these product types are in cart';
+$GLOBALS['TL_LANG']['tl_iso_payment']['allAvailable']                                           = 'Enable if all these product types are in cart';
+$GLOBALS['TL_LANG']['tl_iso_payment']['oneAvailable']                                           = 'Enable if one of these product types is in cart';
 $GLOBALS['TL_LANG']['tl_iso_payment']['payone']['elv']                                          = 'Debit withdrawal';
 $GLOBALS['TL_LANG']['tl_iso_payment']['payone']['cc']                                           = 'Credit card';
 $GLOBALS['TL_LANG']['tl_iso_payment']['payone']['dc']                                           = 'Debit card';
